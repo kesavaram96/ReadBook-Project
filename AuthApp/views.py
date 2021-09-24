@@ -1,30 +1,39 @@
 # python imports
 import requests
-from django.contrib.auth.hashers import make_password,check_password
-
-
 
 # Django imports
 from django.shortcuts import render
 from django.core.exceptions import ObjectDoesNotExist, ValidationError  
+from django.contrib.auth.hashers import make_password,check_password
+from django.contrib.auth import get_user_model,logout,login,authenticate
+from django.http import Http404
+# from django.contrib.auth import logout
 
 # Rest Framework imports
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.views import APIView
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView,UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_jwt.serializers import JSONWebTokenSerializer
+from rest_framework import permissions
+# from rest_framework_jwt.serializers import JSONWebTokenSerializer
 from rest_framework_jwt.views import JSONWebTokenAPIView
 
-from .serializers import UserCreateSerializer,loginserializer
-from .models import User
+from rest_framework import generics
+from django.contrib.auth.models import User,auth
+from rest_framework.permissions import IsAuthenticated   
 
+
+#Local imports
+from .serializers import UserCreateSerializer,JSONWebTokenSerializer,ChangePasswordSerializer
+from .models import User
 from AuthApp.utils import generate_jwt_token
-# Create your views here.
-from django.contrib.auth import get_user_model
+
+
+
 
 User = get_user_model()
+#---------------User registration view--------------------
 class RegistrationAPIView(APIView):
     serializer_class = UserCreateSerializer
 
@@ -45,9 +54,9 @@ class RegistrationAPIView(APIView):
                 return Response({'status': False,
                                  'message': message},
                                 status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
+        except:
             return Response({'status': False,
-                             'message': str(e)},
+                             'message': str('Password must be same')},
                             status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, format=None):
@@ -55,6 +64,7 @@ class RegistrationAPIView(APIView):
         serializer = UserCreateSerializer(snippets, many=True)
         return Response(serializer.data)
     
+#---------------------User login view-------------------------------
 class LoginView(JSONWebTokenAPIView):
     serializer_class = JSONWebTokenSerializer
     
@@ -66,16 +76,25 @@ class LoginView(JSONWebTokenAPIView):
             serializer = JSONWebTokenSerializer(data=request.data)
             if serializer.is_valid():
                 serialized_data = serializer.validate(request.data)
-                # from custom_logger import DatabaseCustomLogger
-                # d = DatabaseCustomLogger()
-                # d.database_logger(123)
+                
+                # print(re)
                 user = User.objects.get(email=request.data.get('email'))
                 usertype=user.ROLE
-                # if not self.object.check_password(serializer.data.POST("password")):
+                
+                #ownrisk
+                username = request.data.get('email')
+                password = request.data.get('password')
+                user = authenticate(request, email=username, password=password)
+                if user is not None:
+                    login(request, user)
+               
+
                 return Response({
                     'status': True,
-                    'token': serialized_data['token'], 'UserType':usertype,
+                    'token': serialized_data['token'], 
+                    'role':usertype,
                 }, status=status.HTTP_200_OK)
+                    
             else:
                 message = ''
                 for error in serializer.errors.values():
@@ -89,10 +108,9 @@ class LoginView(JSONWebTokenAPIView):
                              'message': "User doesnot exists"},
                             status=status.HTTP_400_BAD_REQUEST)
             
-
+#--------user_logoutView------------------------------------------
 class LogoutView(APIView):
-    permission_classes = (IsAuthenticated,)
-
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     @staticmethod
     def post(request):
         """
@@ -100,6 +118,7 @@ class LogoutView(APIView):
         """
         try:
             user = request.data.get('user', None)
+            print(user)
             logout(request)
             return Response({'status': True,
                              'message': "logout successfully"},
@@ -107,3 +126,20 @@ class LogoutView(APIView):
         except (AttributeError, ObjectDoesNotExist):
             return Response({'status': False},
                             status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+
+#---------Change_password----------------------------------------
+class ChangePasswordView(UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.save()
+            return Response({'message':'Password Sucessfully updated'}, status=status.HTTP_200_OK)
+        
+    

@@ -41,9 +41,10 @@ INSTALLED_APPS = [
     #restpackages
     'rest_framework',
     'rest_framework_swagger',
+    
     #intalled apps
     'AuthApp',
-    # 'AdminApp',
+    'AdminApp',
 ]
 
 MIDDLEWARE = [
