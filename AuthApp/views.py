@@ -2,12 +2,12 @@
 import requests
 
 # Django imports
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.core.exceptions import ObjectDoesNotExist, ValidationError  
 from django.contrib.auth.hashers import make_password,check_password
 from django.contrib.auth import get_user_model,logout,login,authenticate
 from django.http import Http404
-# from django.contrib.auth import logout
+
 
 # Rest Framework imports
 from rest_framework import serializers, status
@@ -21,12 +21,19 @@ from rest_framework_jwt.views import JSONWebTokenAPIView
 
 from rest_framework import generics
 from django.contrib.auth.models import User,auth
-from rest_framework.permissions import IsAuthenticated   
+from rest_framework.permissions import IsAuthenticated
+
+from AuthApp.compat import Serializer   
+
 
 
 #Local imports
-from .serializers import UserCreateSerializer,JSONWebTokenSerializer,ChangePasswordSerializer
-from .models import User
+from .serializers import (UserCreateSerializer,
+                          JSONWebTokenSerializer,
+                          ChangePasswordSerializer,
+                          PasswordResetSerializer,
+                          ProfileUpdateSerializer)
+from .models import AddressBook, User
 from AuthApp.utils import generate_jwt_token
 
 
@@ -139,7 +146,33 @@ class ChangePasswordView(UpdateAPIView):
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            user = serializer.save()
+            serializer.save()
             return Response({'message':'Password Sucessfully updated'}, status=status.HTTP_200_OK)
         
     
+#------User_profile_update-------------------------
+class ProfileUpdateView(ListAPIView,UpdateAPIView):
+    serializer_class = ProfileUpdateSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = User.objects.all()
+       
+    def get(self,request,format=None):
+        requestUser=request.user
+        snippets = User.objects.filter(email=requestUser)
+        address=AddressBook.objects.filter(user=requestUser)
+        print(address)
+        serializer = ProfileUpdateSerializer(snippets, many=True)
+        return Response(serializer.data)
+    
+    def get_object(self):
+        return self.request.user
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ProfileUpdateSerializer(
+            instance=instance,
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

@@ -106,11 +106,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
             
     @transaction.atomic()
     def create(self, validated_data):
-        first_name = validated_data['first_name']
-        last_name = validated_data['last_name']
+        # first_name = validated_data['first_name']
+        # last_name = validated_data['last_name']
         role = validated_data['ROLE']
         email = validated_data['email']
-        interests=validated_data['interests']
+        # interests=validated_data['interests']
         phone_no=validated_data['phone_no']
         
         
@@ -118,8 +118,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if validated_data['password']!=validated_data['password_confirmation']:
             raise serializers.ValidationError('Password must be same')
         else:
-            user = User.objects.create(first_name=first_name,last_name=last_name,
-                                       ROLE=role,email=email,interests=interests,phone_no=phone_no)
+            user = User.objects.create(
+                                       ROLE=role,
+                                       email=email,
+                                       phone_no=phone_no)
             user.set_password(validated_data['password'])
             user.save()
             return user
@@ -128,8 +130,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('email','password', 
-                  'first_name', 'last_name', 
-                  'ROLE','password_confirmation','interests','phone_no',
+                  
+                  'ROLE','password_confirmation','phone_no',
                  )
         extra_kwargs={'password':{'write_only':True}}
         non_native_fields = ('password_confirmation',)
@@ -165,3 +167,28 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return user
+    
+class PasswordResetSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=False, allow_blank=True, )
+    
+    class Meta:
+        model=User
+        fields=('email')
+        
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    # def get_object(self):
+    #     return self.request.user
+    class Meta:
+        model=User
+        fields=('first_name','last_name','ROLE','phone_no','interests')
+
+    def update(self, instance,validated_data):
+        instance.first_name = validated_data['first_name']
+        instance.last_name = validated_data['last_name']
+        instance.ROLE = validated_data['ROLE']
+        instance.phone_no = validated_data['phone_no']
+        instance.interests = validated_data['interests']
+        
+
+        instance.save()
+        return instance

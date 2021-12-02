@@ -12,34 +12,46 @@ from django_filters.rest_framework import DjangoFilterBackend
 #RestImports
 from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView
-from rest_framework.generics import DestroyAPIView, GenericAPIView, ListAPIView,UpdateAPIView,DestroyAPIView
+from rest_framework.generics import CreateAPIView, DestroyAPIView, GenericAPIView, ListAPIView,UpdateAPIView,DestroyAPIView
 from rest_framework import generics,mixins
 from rest_framework.response import Response
 from rest_framework import serializers, status
-
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework import permissions
+from rest_framework.filters import SearchFilter,OrderingFilter
 
 
 #Serializers
 from AdminApp.serializers import (UpdateUserSerializer,
                                   UserViewSerializer,
                                   AdminProfileSerializer,
-                                  UserCreateSerializer)
+                                  UserCreateSerializer,
+                                  BookViewSerializer,
+                                  BoughtSerializer,
+                                  SellerUploads,
+                                  BookListSerializer,
+                                  AddBookSerializer)
 
 #localimport
 from AuthApp.utils import generate_jwt_token
 
+from BookApp.models import Book
+from BuyerApp.models import Bought
 
 User = get_user_model()
 
 class IsSuperUser(IsAdminUser):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.ROLE=='admin' and request.user.is_superuser)
+        try:
+            request.user
+            return bool(request.user and request.user.ROLE=='admin' and request.user.is_superuser)
+        except:
+            redirect('auth/login')
+        
     
-
 class AdminUserView(generics.ListAPIView,):
-    permission_classes = (IsSuperUser,IsAuthenticated)
+    # permission_classes = (IsSuperUser,IsAuthenticated)
     
     def get(self, request, format=None):
         snippets = User.objects.all()
@@ -68,8 +80,12 @@ class sellerUpdateView(UpdateAPIView,DestroyAPIView):
         try:
             User.objects.get(pk=pk,ROLE='seller')
             snippets = User.objects.filter(pk=pk,ROLE='seller')
+            snippets2 = Book.objects.filter(Seller=pk)
+            
             serializer = UpdateUserSerializer(snippets, many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+            serializer2=BookViewSerializer(snippets2,many=True)
+            
+            return Response({'User':serializer.data,'Sales':serializer2.data},status=status.HTTP_200_OK)
  
         except User.DoesNotExist:
             return Response({'status': False,'message':'User not found'},
@@ -88,26 +104,35 @@ class sellerUpdateView(UpdateAPIView,DestroyAPIView):
         serializer.save()
         return Response(serializer.data)
     
-class BuyerUserView(APIView):
+class BuyerUserView(generics.ListAPIView):
     permission_classes = (IsSuperUser,IsAuthenticated)
-    def get(self,format=None):
-        snippets = User.objects.filter(ROLE='buyer')
-        serializer = UserViewSerializer(snippets, many=True)
-        return Response(serializer.data)
+    queryset = User.objects.filter(ROLE='buyer')
+    serializer_class = UserViewSerializer
+    filter_backends = [SearchFilter,OrderingFilter]
+    search_fields = ['email','first_name']
+  
+    
+    # def get(self,format=None):
+    #     snippets = User.objects.filter(ROLE='buyer')
+    #     serializer = UserViewSerializer(snippets, many=True)
+    #     return Response(serializer.data)
 
 class BuyerUpdateView(ListAPIView,DestroyAPIView):
     permission_classes = (IsSuperUser,IsAuthenticated)
     serializer_class = UpdateUserSerializer
-    queryset = User.objects.filter(ROLE='seller')
+    queryset = User.objects.filter(ROLE='buyer')
     
     
     def get(self, request,pk, format=None):
         
         try:
-            User.objects.get(pk=pk,ROLE='seller')
-            snippets = User.objects.filter(pk=pk,ROLE='seller')
+            User.objects.get(pk=pk,ROLE='buyer')
+            snippets = User.objects.filter(pk=pk,ROLE='buyer')
+            snippets2=Bought.objects.filter(buyer=pk)
             serializer = UpdateUserSerializer(snippets, many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+            serializer2 = BookViewSerializer(snippets2, many=True)
+            
+            return Response({'User':serializer.data,'Books':serializer2.data},status=status.HTTP_200_OK)
  
         except User.DoesNotExist:
             return Response({'status': False,'message':'User not found'},
@@ -125,8 +150,6 @@ class BuyerUpdateView(ListAPIView,DestroyAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-    
-
 
 class DonarUserView(APIView):
     permission_classes = (IsSuperUser,IsAuthenticated)
@@ -203,7 +226,6 @@ class UpdateProfileView(UpdateAPIView,ListAPIView,):
 class UserCrateView(APIView):
     serializer_class = UserCreateSerializer
     permission_classes = (IsSuperUser,IsAuthenticated)
-   
 
     __doc__ = "Registration API for user"
 
@@ -277,3 +299,64 @@ class UserProfileChangeAPIView(generics.RetrieveAPIView,
 
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+    
+class sellerUploadView(APIView):
+    # permission_classes = (IsSuperUser,IsAuthenticated)
+    def get(self,format=None):
+        snippets = Book.objects.all()
+        serializer = SellerUploads(snippets, many=True)
+        return Response(serializer.data)
+    
+    def post(self,request):
+        pass
+    
+class BoughtView(APIView):
+    
+    def get(self,format=None):
+        snippets = Bought.objects.all()
+        serializer = BoughtSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+class ProductView(APIView):
+    
+    def get(self,format=None):
+        snippets = Book.objects.all()
+        serializer = BookViewSerializer(snippets, many=True)
+        return Response(serializer.data)
+    
+
+class BookListView(generics.ListAPIView,generics.ListCreateAPIView):
+    permission_classes = (IsSuperUser,IsAuthenticated)
+    queryset = Book.objects.all()
+    serializer_class = BookListSerializer
+    filter_backends = [SearchFilter,OrderingFilter]
+    search_fields = ['Name','Caption']
+    
+class ProductUpdateView(ListAPIView,DestroyAPIView):
+    permission_classes = (IsSuperUser,IsAuthenticated)
+    serializer_class = BookListSerializer
+    queryset = Book.objects.all()
+    
+    
+    def get(self, request,pk, format=None):
+        
+        try:
+            Book.objects.get(pk=pk)
+            snippets = Book.objects.filter(pk=pk)
+            serializer = BookListSerializer(snippets, many=True)
+            
+            return Response(serializer.data,status=status.HTTP_200_OK)
+ 
+        except Book.DoesNotExist:
+            return Response({'status': False,'message':'Product not found'},
+                            status=status.HTTP_400_BAD_REQUEST) 
+    
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+            
+    
+class AddProductsView(CreateAPIView):
+    permission_classes = (IsSuperUser,IsAuthenticated)
+    serializer_class = AddBookSerializer
+    queryset = Book.objects.all()
+    

@@ -63,6 +63,7 @@ class User(AbstractUser):
     
     
     email = models.EmailField(max_length=254, unique=True)
+    # shop_name=models.CharField(max_length=100,blank=True,null=True)
     # interests=models.OneToOneField(Category,on_delete=models.CASCADE,null=True,blank=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -86,3 +87,9 @@ class AddressBook(models.Model):
     Is_Default=models.BooleanField()
     Phone = PhoneField(blank=True, help_text='Contact phone number',unique=False)
     AddressType=models.CharField(max_length=100,blank=True,null=True)
+    
+    def __str__(self):
+        return str(self.user)
+    
+# class Seller(models.Model):
+    

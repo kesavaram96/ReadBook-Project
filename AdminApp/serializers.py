@@ -1,9 +1,34 @@
 from logging import exception
-from rest_framework import serializers
+from rest_framework import fields, serializers
 from django.contrib.auth import get_user_model
 from django.db import transaction
+
+from BookApp.models import Book,Author,Publisher
+from BuyerApp.models import Bought
+from AuthApp.models import User,AddressBook
+
+
+
 User = get_user_model()
 
+class AuthorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Author
+        fields =('Name',)
+        
+class PublisherSerializer(serializers.ModelSerializer):
+   
+    class Meta:
+        model = Publisher
+        fields = ('Name',)
+ 
+class UserSerializer(serializers.ModelSerializer):
+ 
+    class Meta:
+        model = User
+        fields ='__all__'
+     
 class UserViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -18,22 +43,6 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             return User.objects.get(pk=pk)
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found")
-
-    # def validate_email(self, value):
-    #     # user = self.context['request'].user
-    #     user=get_object()
-    #     if User.objects.exclude(email=user.email).filter(email=value).exists():
-    #         raise serializers.ValidationError({"email": "This email is already in use."})
-    #     return value
-
-    # def validate_username(self, value):
-
-    #     # user = self.context['request'].user
-    #     if User.objects.exclude(username=value).filter(username=value).exists():
-    #         raise serializers.ValidationError({"username": "This username is already in use."})
-    #     return value
-        
-
     class Meta:
         model = User
         fields = ('email','id', 
@@ -73,6 +82,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
         email = validated_data['email']
         interests=validated_data['interests']
         phone_no=validated_data['phone_no']
+        is_superuser=validated_data['is_superuser']
+        is_staff=validated_data['is_staff']
+        
         
         
         
@@ -80,7 +92,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Password must be same')
         else:
             user = User.objects.create(first_name=first_name,last_name=last_name,
-                                       ROLE=role,email=email,interests=interests,phone_no=phone_no)
+                                       ROLE=role,email=email,interests=interests,phone_no=phone_no,
+                                       is_staff=is_staff,is_superuser=is_superuser)
             user.set_password(validated_data['password'])
             user.save()
             return user
@@ -97,17 +110,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
         non_native_fields = ('password_confirmation',)
 
 
-
-
-
-
-        
-        
 class AdminProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=User
-        fields=('email','first_name','last_name','ROLE','phone_no')
+        fields=('email','first_name','last_name','ROLE','phone_no','is_super','is_staff')
 
     def update(self, instance,validated_data):
         instance.first_name = validated_data['first_name']
@@ -115,9 +122,82 @@ class AdminProfileSerializer(serializers.ModelSerializer):
         instance.email = validated_data['email']
         instance.ROLE = validated_data['ROLE']
         instance.phone_no = validated_data['phone_no']
+        instance.is_super = validated_data['is_super']
+        instance.is_staff = validated_data['is_staff']
 
         instance.save()
 
         return instance
     
+class BookViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Book
+        fields=('id','Name','Caption','Price','Seller','Rating')
 
+class BookListSerializer(serializers.ModelSerializer):
+    Author=AuthorSerializer(many=True,required=False)
+    Publisher=PublisherSerializer(many=True)
+    class Meta:
+        model=Book
+        fields='__all__'
+
+class SellerUploads(serializers.ModelSerializer):
+
+    class Meta:
+        model=Book
+        fields=('Name','Seller','Caption','FrontCover','Price')
+
+class BoughtSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model=Bought
+        fields='__all__'
+        
+class AddBookSerializer(serializers.ModelSerializer):
+    Author=AuthorSerializer(many=True,required=False)
+    Publisher=PublisherSerializer(many=True)
+    class Meta:
+        model=Book
+        fields='__all__'
+        
+    def create(self, validated_data):
+        author_data = validated_data.pop('Author')
+        publisher_data = validated_data.pop('Publisher')
+        
+        group = Book.objects.create(**validated_data)
+        
+        for author in author_data:
+            d=dict(author)
+            if Author.objects.filter(Name=d['Name']).exists():
+                au=Author.objects.get(Name=d['Name'])
+                if au:
+                    group.Author.add(au)
+            else:
+                Author.objects.create(Name=d['Name'])
+                au=Author.objects.get(Name=d['Name'])
+                if au:
+                    group.Author.add(au)
+        for publisher in publisher_data:
+            d=dict(publisher)
+            if Publisher.objects.filter(Name=d['Name']).exists():
+                au=Publisher.objects.get(Name=d['Name'])
+                if au:
+                    group.Author.add(au)
+            else:
+                Publisher.objects.create(Name=d['Name'])
+                au=Publisher.objects.get(Name=d['Name'])
+                if au:
+                    group.Publisher.add(au)    
+        return group
+
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Book
+        fields=('Rating')
+        
+    def update(self, instance,validated_data):
+        instance.Rating = validated_data['Rating']
+        instance.save()
+        return instance
+    
+    

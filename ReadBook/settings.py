@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -84,7 +85,7 @@ DATABASES = {
         'ENGINE':'django.db.backends.mysql',
         'OPTIONS': {
         'sql_mode': 'traditional'},
-        'NAME':'readbookproject', ##databaseName
+        'NAME':'readbook-db', ##databaseName
         'USER':'root',
         'PASSWORD':'',
         'HOST':'127.0.0.1',
@@ -129,7 +130,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/Static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'Static')
+]
+MEDIA_URL='/Images/'
+MEDIA_ROOT=os.path.join(BASE_DIR,'Images')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -143,6 +149,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
 
-    )
+    ),
+    
     
 }

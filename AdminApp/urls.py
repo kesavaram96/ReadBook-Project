@@ -7,7 +7,13 @@ from .views import ( sellerUserView,
                     BuyerUpdateView,
                     DonarUpdateView,
                     adminProfileView,
-                    UserCrateView)
+                    UserCrateView,
+                    ProductView,
+                    ProductUpdateView,
+                    sellerUploadView,
+                    BoughtView,
+                    BookListView,
+                    AddProductsView)
 
 
 urlpatterns = [
@@ -19,21 +25,25 @@ urlpatterns = [
     #sellerProfileAPI
     path('seller-profile/',sellerUserView.as_view(),name='sellerview'),
     path('seller-profile/<int:pk>/',sellerUpdateView.as_view()),
-    #path('seller-profile/uploads/,sellerUploadView.as_view(),name='selleruploads')
+    path('seller-profile/uploads/',sellerUploadView.as_view(),name='selleruploads'),
     
     #BuyerProfileAPI
     path('buyer-profile/',BuyerUserView.as_view(),name='BuyerView'),
     path('buyer-profile/<int:pk>/',BuyerUpdateView.as_view(),name='BuyerUpdateView'),
-    #path('buyer-profile/boughts/',BuyerBoughtView.as_view(),name='boughtView')
+    path('buyer-profile/boughts/',BoughtView.as_view(),name='boughtView'),
     
     #DonarProfileAPI
     path('donar-profile/',DonarUserView.as_view(),name='sellerview'),
     path('donar-profile/<int:pk>/',DonarUpdateView.as_view(),name='sellerview'),
     
     #productAPI
-    #path('product/',ProductView.as_view(),name='productview'),
-    #path('product/<int:pk>/',ProductUpdateView.as_view(),name='productupdate'),
+    path('products/',ProductView.as_view(),name='productview'),
+    path('products/<int:pk>/',ProductUpdateView.as_view(),name='productupdate'),
+    path('products/add/',AddProductsView.as_view(),name='AddProducts'),
+    path('products-list/',BookListView.as_view(),name='Product List'),
+    
     #path('product/inventry/',ProductInventry.as_view()),
+    # path('products/rating/<int:pk>/')
     
     #SalesAPI
     #path('sales/',SalesView.as_view()),
