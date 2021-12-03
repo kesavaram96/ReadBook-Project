@@ -176,8 +176,7 @@ class PasswordResetSerializer(serializers.ModelSerializer):
         fields=('email')
         
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    # def get_object(self):
-    #     return self.request.user
+
     class Meta:
         model=User
         fields=('first_name','last_name','ROLE','phone_no','interests')

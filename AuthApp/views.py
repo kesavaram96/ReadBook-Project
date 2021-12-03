@@ -37,8 +37,6 @@ from .models import AddressBook, User
 from AuthApp.utils import generate_jwt_token
 
 
-
-
 User = get_user_model()
 #---------------User registration view--------------------
 class RegistrationAPIView(APIView):
@@ -84,11 +82,9 @@ class LoginView(JSONWebTokenAPIView):
             if serializer.is_valid():
                 serialized_data = serializer.validate(request.data)
                 
-                # print(re)
                 user = User.objects.get(email=request.data.get('email'))
                 usertype=user.ROLE
-                
-                #ownrisk
+
                 username = request.data.get('email')
                 password = request.data.get('password')
                 user = authenticate(request, email=username, password=password)

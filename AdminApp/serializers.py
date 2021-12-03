@@ -163,6 +163,8 @@ class AddBookSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         author_data = validated_data.pop('Author')
         publisher_data = validated_data.pop('Publisher')
+        user = self.context['request'].user
+        
         
         group = Book.objects.create(**validated_data)
         
