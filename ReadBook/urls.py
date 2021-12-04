@@ -11,3 +11,6 @@ urlpatterns = [
     
     
 ]
+admin.site.site_header="ReadBook Admin Page"
+admin.site.site_title="ReadBook Admin Page"
+admin.site.index_title="Welcome back to ReadBook Admin Page"

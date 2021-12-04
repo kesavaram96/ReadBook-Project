@@ -1,10 +1,5 @@
 from django.urls import path,include
-# from .views import RegistrationAPIView,LoginView,LogoutView,ChangePasswordView
+from .views import AddCartView
 urlpatterns = [
-    # path('register/',RegistrationAPIView.as_view()),
-    # path('login/',LoginView.as_view()),
-    # path('logout/',LogoutView.as_view()),
-    
-    # path('change-password/', ChangePasswordView.as_view()),
-    
+    path('add-cart/<int:pk>/',AddCartView.as_view()),
     ]
