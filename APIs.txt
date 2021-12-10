@@ -1,0 +1,28 @@
+
+
+---------------//Admin APIs--------------------------------------------------------------------------
+
+http://127.0.0.1:8000/admin/profile/	----Admin profile,Edit admin
+http://127.0.0.1:8000/admin/user-create/     ---User create, Admin user create
+
+http://127.0.0.1:8000/admin/seller-profile/		---seller user profiles
+http://127.0.0.1:8000/admin/seller-profile/<int:pk>/ 	---seller profile edit,delete,individual user detail
+
+
+http://127.0.0.1:8000/admin/seller-profile/uploads/		---seller user uploads
+http://127.0.0.1:8000/admin/seller-profile/uploads/<int:pk>/	---Review product
+
+http://127.0.0.1:8000/admin/buyer-profile/		---Buyer user profiles
+http://127.0.0.1:8000/admin/buyer-profile/<int:pk>/		------Buyer profile edit,delete,individual user detail
+http://127.0.0.1:8000/admin/buyer-profile/boughts/		----boughts by buyer
+
+
+http://127.0.0.1:8000/admin/donar-profile/		----Donar profile
+http://127.0.0.1:8000/admin/donar-profile/<int:pk>/		---Donar profile edit,delete,individual user detail
+
+http://127.0.0.1:8000/admin/products/products/<int:pk>/		--products delete 	
+http://127.0.0.1:8000/admin/products/add/		--Create products
+http://127.0.0.1:8000/admin/products-list/		---Products List View
+
+http://127.0.0.1:8000/admin/csv/			----export Product as Excel sheet
+http://127.0.0.1:8000/admin/sales/		----Sales Tables

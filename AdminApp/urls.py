@@ -13,7 +13,10 @@ from .views import ( sellerUserView,
                     sellerUploadView,
                     BoughtView,
                     BookListView,
-                    AddProductsView)
+                    AddProductsView,
+                    ExportCSVView,
+                    ReviewProductView,
+                    SalesView)
 
 
 urlpatterns = [
@@ -26,6 +29,8 @@ urlpatterns = [
     path('seller-profile/',sellerUserView.as_view(),name='sellerview'),
     path('seller-profile/<int:pk>/',sellerUpdateView.as_view()),
     path('seller-profile/uploads/',sellerUploadView.as_view(),name='selleruploads'),
+    path('seller-profile/uploads/<int:pk>/',ReviewProductView.as_view(),name='Review'),
+    
     
     #BuyerProfileAPI
     path('buyer-profile/',BuyerUserView.as_view(),name='BuyerView'),
@@ -44,9 +49,10 @@ urlpatterns = [
     
     #path('product/inventry/',ProductInventry.as_view()),
     # path('products/rating/<int:pk>/')
+    path('csv/',ExportCSVView.as_view()),
     
     #SalesAPI
-    #path('sales/',SalesView.as_view()),
+    path('sales/',SalesView.as_view()),
     
     
     

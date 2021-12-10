@@ -3,7 +3,7 @@ from rest_framework import fields, serializers
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from BookApp.models import Book,Author,Publisher
+from BookApp.models import Book,Author,Publisher,Sales
 from BuyerApp.models import Bought
 from AuthApp.models import User,AddressBook
 
@@ -114,7 +114,7 @@ class AdminProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=User
-        fields=('email','first_name','last_name','ROLE','phone_no','is_super','is_staff')
+        fields=('email','first_name','last_name','ROLE','phone_no','is_staff','is_superuser')
 
     def update(self, instance,validated_data):
         instance.first_name = validated_data['first_name']
@@ -122,7 +122,7 @@ class AdminProfileSerializer(serializers.ModelSerializer):
         instance.email = validated_data['email']
         instance.ROLE = validated_data['ROLE']
         instance.phone_no = validated_data['phone_no']
-        instance.is_super = validated_data['is_super']
+        instance.is_super = validated_data['is_superuser']
         instance.is_staff = validated_data['is_staff']
 
         instance.save()
@@ -145,7 +145,7 @@ class SellerUploads(serializers.ModelSerializer):
 
     class Meta:
         model=Book
-        fields=('Name','Seller','Caption','FrontCover','Price')
+        fields=('Name','Seller','Caption','FrontCover','Price','id','is_publish','Upload_Date')
 
 class BoughtSerializer(serializers.ModelSerializer):
     
@@ -192,14 +192,18 @@ class AddBookSerializer(serializers.ModelSerializer):
                     group.Publisher.add(au)    
         return group
 
-class RatingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Book
-        fields=('Rating')
+# class ReviewSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model=Book
+#         fields=('is_publish',)
         
-    def update(self, instance,validated_data):
-        instance.Rating = validated_data['Rating']
-        instance.save()
-        return instance
+#     def update(self, instance,validated_data):
+#         instance.is_publish = validated_data['is_publish']
+#         instance.save()
+#         return instance
     
     
+class SalesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Sales
+        fields="__all__"

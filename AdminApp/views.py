@@ -2,6 +2,7 @@
 #Django imports
 from django.contrib.auth import get_user_model
 from django.shortcuts import render,redirect
+from django.http import HttpResponse
 from AuthApp.models import User
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -31,12 +32,14 @@ from AdminApp.serializers import (UpdateUserSerializer,
                                   BoughtSerializer,
                                   SellerUploads,
                                   BookListSerializer,
-                                  AddBookSerializer)
+                                  AddBookSerializer,
+                                  SalesSerializer)
+#Python import
+import csv
 
 #localimport
 from AuthApp.utils import generate_jwt_token
-
-from BookApp.models import Book
+from BookApp.models import Book,Sales
 from BuyerApp.models import Bought
 
 User = get_user_model()
@@ -51,7 +54,7 @@ class IsSuperUser(IsAdminUser):
         
     
 class AdminUserView(generics.ListAPIView,):
-    # permission_classes = (IsSuperUser,IsAuthenticated)
+    permission_classes = (IsSuperUser,IsAuthenticated)
     
     def get(self, request, format=None):
         snippets = User.objects.all()
@@ -188,7 +191,6 @@ class DonarUpdateView(UpdateAPIView,ListAPIView,DestroyAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-              
 
 class UpdateProfileView(UpdateAPIView,ListAPIView,):
     permission_classes = (IsSuperUser,IsAuthenticated)
@@ -224,9 +226,9 @@ class UpdateProfileView(UpdateAPIView,ListAPIView,):
 
 
 class UserCrateView(APIView):
-    serializer_class = UserCreateSerializer
     permission_classes = (IsSuperUser,IsAuthenticated)
-
+    serializer_class = UserCreateSerializer
+    
     __doc__ = "Registration API for user"
 
     def post(self, request, *args, **kwargs):
@@ -256,7 +258,7 @@ class UserCrateView(APIView):
 
 
 class adminProfileView(ListAPIView,UpdateAPIView,DestroyAPIView):
-    permission_classes = (IsSuperUser,IsAuthenticated)
+    # permission_classes = (IsSuperUser,IsAuthenticated)
     serializer_class = AdminProfileSerializer
     queryset = User.objects.all()
 
@@ -301,9 +303,9 @@ class UserProfileChangeAPIView(generics.RetrieveAPIView,
         return self.update(request, *args, **kwargs)
     
 class sellerUploadView(APIView):
-    # permission_classes = (IsSuperUser,IsAuthenticated)
+    permission_classes = (IsSuperUser,IsAuthenticated)
     def get(self,format=None):
-        snippets = Book.objects.all()
+        snippets = Book.objects.all().order_by('Upload_Date').reverse()
         serializer = SellerUploads(snippets, many=True)
         return Response(serializer.data)
     
@@ -311,14 +313,14 @@ class sellerUploadView(APIView):
         pass
     
 class BoughtView(APIView):
-    
+    permission_classes = (IsSuperUser,IsAuthenticated)
     def get(self,format=None):
         snippets = Bought.objects.all()
         serializer = BoughtSerializer(snippets, many=True)
         return Response(serializer.data)
 
 class ProductView(APIView):
-    
+    permission_classes = (IsSuperUser,IsAuthenticated)
     def get(self,format=None):
         snippets = Book.objects.all()
         serializer = BookViewSerializer(snippets, many=True)
@@ -330,7 +332,7 @@ class BookListView(generics.ListAPIView,generics.ListCreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookListSerializer
     filter_backends = [SearchFilter,OrderingFilter]
-    search_fields = ['Name','Caption']
+    search_fields = '__all__'
     
 class ProductUpdateView(ListAPIView,DestroyAPIView):
     permission_classes = (IsSuperUser,IsAuthenticated)
@@ -360,3 +362,46 @@ class AddProductsView(CreateAPIView):
     serializer_class = AddBookSerializer
     queryset = Book.objects.all()
     
+class ExportCSVView(APIView):
+    serializer_class = SellerUploads
+    def get_serializer(self, queryset, many=True):
+        return self.serializer_class(
+            queryset,
+            many=True,
+        )
+    def get(self, request, *args, **kwargs):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="export.csv"'
+        
+        serializer = self.get_serializer(
+            Book.objects.all(),
+            many=True
+        )
+        header = SellerUploads.Meta.fields
+        
+        writer = csv.DictWriter(response, fieldnames=header)
+        writer.writeheader()
+        for row in serializer.data:
+            writer.writerow(row)
+        
+        return response
+class ReviewProductView(APIView):
+    permission_classes = (IsSuperUser,IsAuthenticated)
+    def get(self,request,pk):
+        try:
+            book=Book.objects.get(pk=pk)
+            book.is_publish=True
+            book.save()
+            return Response({'Message':'Book published'},status=status.HTTP_200_OK)
+ 
+        except Book.DoesNotExist:
+            return Response({'status': False,'message':'Book not found'},
+                            status=status.HTTP_400_BAD_REQUEST) 
+            
+
+class SalesView(generics.ListAPIView):
+    permission_classes = (IsSuperUser,IsAuthenticated)
+    queryset = Sales.objects.all()
+    serializer_class = SalesSerializer
+    filter_backends = [SearchFilter,OrderingFilter]
+    search_fields = '__all__'

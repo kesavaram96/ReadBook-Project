@@ -2,7 +2,7 @@
 from django.db import models
 # from django.db.models.fields import CharField, NullBooleanField
 # from phone_field import PhoneField
-from AuthApp.models import User
+from AuthApp.models import AddressBook, User
 import datetime
 from django.core.validators import MaxValueValidator, MinValueValidator
 # Create your models here.
@@ -53,12 +53,12 @@ class Book(models.Model):
         choices=Catogory,
         default=novels,
     )
-    
+    Language=models.CharField(max_length=150,blank=False,null=True)
     Name=models.CharField(max_length=150,blank=False,null=True)
-    ISBN10=models.BigIntegerField(null=True)
-    ISBN13=models.BigIntegerField(null=True)
+    ISBN=models.BigIntegerField(null=True)
+    # ISBN13=models.BigIntegerField(null=True)
     Author=models.ManyToManyField(Author)
-    PublicationDate=models.IntegerField(choices=year_choices(), default=current_year,null=True)
+    PublicationYear=models.IntegerField(choices=year_choices(), default=current_year,null=True)
     Publisher=models.ManyToManyField(Publisher,blank=True)
     Rating=models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)],null=True)
     CopyRightInfo=models.TextField(blank=True,null=True)
@@ -115,8 +115,20 @@ class Book(models.Model):
     is_free=models.BooleanField(default=False)
     for_sale=models.BooleanField(default=True)
     
-    is_available=models.BooleanField(default=True)
+    is_stock=models.BooleanField(default=True)
+    is_publish=models.BooleanField(default=False)
+    Upload_Date=models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return str(self.Name)
+        return str(self.Name) 
     
+# class Review(models.Model):
+    
+
+class Sales(models.Model):
+    Buyer = models.ForeignKey(User, on_delete=models.CASCADE)
+    Book=models.ForeignKey(Book, on_delete=models.CASCADE)
+    PaymentDetails= models.CharField(max_length=200,blank=True, null=True)
+    Address=models.ForeignKey(AddressBook,on_delete=models.CASCADE)
+    Total_Price=models.IntegerField()
+    Is_shipped=models.BooleanField(default=0)

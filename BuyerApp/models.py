@@ -23,3 +23,7 @@ class Cart(models.Model):
     
     def __str__(self):
         return str(self.book)
+    
+    # @property
+    # def book(self):
+    #     return self.book.Name

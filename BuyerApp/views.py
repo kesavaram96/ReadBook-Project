@@ -26,9 +26,41 @@ from rest_framework.filters import SearchFilter,OrderingFilter
 
 
 #Serializers
-from BuyerApp.serializers import (CartSerializer)
+from BuyerApp.serializers import (CartSerializer,AddCartSerializer)
 
-class AddCartView(CreateAPIView):
+class AddCartView(APIView):
+    serializer_class = AddCartSerializer
+    queryset = Cart.objects.all()
+    permission_classes = (IsAuthenticated,)
+    
+    @staticmethod
+    def post(request):
+        try:
+            data_serializer = AddCartSerializer(data=request.data)
+            if data_serializer.is_valid():
+                data_serializer.save(buyer=request.user)
+                return Response({'status': True,'message':"Item sucessfully added to the cart"},status=status.HTTP_200_OK)
+            else:
+                message = ''
+                for error in data_serializer.errors.values():
+                    message += " "
+                    message += error[0]
+                return Response({'status': False,
+                                 'message': message},
+                                status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'status': False,
+                             'message': str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        
+            
+class CartView(ListAPIView):
     serializer_class = CartSerializer
     queryset = Cart.objects.all()
 
+    def get(self,request,format=None):
+        requestUser=request.user
+        snippets = Cart.objects.filter(buyer=requestUser)
+        serializer = CartSerializer(snippets, many=True)
+        return Response(serializer.data)
