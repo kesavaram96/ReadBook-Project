@@ -1,0 +1,10 @@
+Python 3.9.4
+django 3.2.6
+django-phone-field 1.8.1
+Pillow==8.2.0
+djangorestframework-simplejwt==5.0.0
+mysql==0.0.2
+mysql-connector==2.2.9
+mysqlclient==2.0.3
+djangorestframework==3.12.4
+django-rest-swagger==2.2.0
